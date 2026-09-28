@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Orma — Scope</title>
+  <style>
+    :root {
+      --paper: #f3efe6;
+      --sheet: #faf7f1;
+      --ink: #1c1915;
+      --muted: #5e584e;
+      --rule: #ddd4c6;
+      --green: #1d5c40;
+      --green-soft: #e5f0ea;
+      --amber: #8a5a12;
+      --amber-soft: #f6edd9;
+      --cut: #6e3a34;
+      --cut-soft: #f6e8e4;
+      --later: #3d4f66;
+      --later-soft: #e7eef5;
+      --shadow: 0 18px 50px rgba(48, 36, 18, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(1200px 500px at 10% -10%, #efe6d4 0%, transparent 55%),
+        var(--paper);
+      color: var(--ink);
+      font-family: "Iowan Old Style", Palatino, "Palatino Linotype", Georgia, serif;
+      line-height: 1.5;
+    }
+
+    .wrap {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    header.mast {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 36px;
+    }
+
+    .kicker {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 0.78rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--green);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(3rem, 8vw, 4.6rem);
+      font-weight: 500;
+      letter-spacing: -0.03em;
+      line-height: 0.9;
+    }
+
+    .lede {
+      margin: 0;
+      max-width: 38rem;
+      font-size: 1.25rem;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: fit-content;
+      margin-top: 4px;
+      padding: 4px 10px;
+      border: 1px solid var(--rule);
+      border-radius: 999px;
+      background: var(--sheet);
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 0.75rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .status i {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      display: block;
+    }
+
+    .canon {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .canon code {
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: 0.84em;
+    }
+
+    section {
+      margin: 28px 0;
+    }
+
+    h2 {
+      margin: 0 0 10px;
+      font-size: 0.82rem;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-weight: 650;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .card {
+      background: var(--sheet);
+      border: 1px solid var(--rule);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 22px 22px 8px;
+    }
+
+    .kernel {
+      border-color: #b7d4c6;
+      background:
+        linear-gradient(180deg, var(--green-soft), var(--sheet) 72px);
+    }
+
+    .kernel p:first-of-type {
+      font-size: 1.35rem;
+      line-height: 1.35;
+    }
+
+    p { margin: 0 0 14px; }
+
+    figure {
+      margin: 0;
+    }
+
+    svg.flow {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .node { fill: var(--sheet); stroke: var(--rule); stroke-width: 1.5; }
+    .node.user { stroke: #c8b89a; }
+    .node.proof { fill: var(--green-soft); stroke: #8fbfa8; }
+    .label {
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      fill: var(--muted);
+    }
+    .title {
+      font-family: "Iowan Old Style", Palatino, Georgia, serif;
+      font-size: 16px;
+      fill: var(--ink);
+    }
+    .sub {
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 12px;
+      fill: var(--muted);
+    }
+    .arrow { stroke: var(--green); stroke-width: 1.6; fill: none; }
+    .arrow-head { fill: var(--green); }
+
+    .steps {
+      margin: 14px 0 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 8px;
+    }
+
+    .steps li {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 8px;
+      align-items: baseline;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 0.92rem;
+    }
+
+    .steps span {
+      color: var(--green);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    @media (min-width: 740px) {
+      .grid.two { grid-template-columns: 1fr 1fr; }
+    }
+
+    .panel {
+      background: var(--sheet);
+      border: 1px solid var(--rule);
+      border-radius: 18px;
+      padding: 18px 20px 6px;
+    }
+
+    details.reveal {
+      background: var(--sheet);
+      border: 1px solid var(--rule);
+      border-radius: 16px;
+      margin: 10px 0;
+      overflow: hidden;
+    }
+
+    details.reveal summary {
+      cursor: pointer;
+      list-style: none;
+      padding: 16px 18px;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-weight: 650;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    details.reveal summary::-webkit-details-marker { display: none; }
+
+    details.reveal summary::after {
+      content: "Open";
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 550;
+    }
+
+    details.reveal[open] summary::after { content: "Close"; }
+
+    details.now summary { background: var(--green-soft); }
+    details.later summary { background: var(--later-soft); }
+    details.cut summary { background: var(--cut-soft); }
+
+    .reveal-body { padding: 4px 18px 8px; }
+    .reveal-body ul { margin: 12px 0 16px; padding-left: 1.1rem; }
+    .reveal-body li { margin: 0 0 10px; }
+    .reveal-body li strong { font-weight: 650; }
+
+    .tag {
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border-radius: 999px;
+      padding: 3px 8px;
+    }
+
+    details.now .tag { color: var(--green); }
+    details.later .tag { color: var(--later); }
+    details.cut .tag { color: var(--cut); }
+
+    footer {
+      margin-top: 36px;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="mast">
+      <p class="kicker">Scope · proof of concept</p>
+      <h1>Orma</h1>
+      <p class="lede">A personal journal that reconstructs one day from photos you already took, and writes a short diary that can show why it said what it said.</p>
+      <p class="status"><i></i> Approved</p>
+      <p class="canon">Canonical plan: <code>devpost/scope.md</code>. This page is the review companion.</p>
+    </header>
+
+    <section class="card kernel" aria-labelledby="kernel">
+      <h2 id="kernel">The unique kernel</h2>
+      <p>Orma can reconstruct, but it should not invent.</p>
+      <p>Anyone can ask a model to turn photos into a story. Orma has to show the evidence behind a memory, and say when that evidence is weak instead of filling in a confident detail.</p>
+    </section>
+
+    <section aria-labelledby="connect">
+      <h2 id="connect">User, loop, and proof</h2>
+      <div class="card">
+        <figure>
+          <svg class="flow" viewBox="0 0 760 560" role="img" aria-labelledby="flow-title flow-desc">
+            <title id="flow-title">Orma connects a non-journaler, one day of photos, and a traceable diary</title>
+            <desc id="flow-desc">Someone who wants memories and rarely journals uploads one day of photos. Orma reads metadata, groups moments, and writes a diary only from that evidence. The user inspects why a memory exists, edits it, and saves it. The proof is a claim you can trace to photos, or uncertainty when the evidence is thin.</desc>
+
+            <rect class="node user" x="230" y="16" width="300" height="78" rx="16"/>
+            <text class="label" x="250" y="40">Who</text>
+            <text class="title" x="250" y="64">Wants memories, rarely journals</text>
+
+            <line class="arrow" x1="380" y1="94" x2="380" y2="122"/>
+            <polygon class="arrow-head" points="380,130 374,118 386,118"/>
+
+            <rect class="node" x="40" y="140" width="200" height="86" rx="16"/>
+            <text class="label" x="56" y="164">1</text>
+            <text class="title" x="56" y="188">Upload one day</text>
+            <text class="sub" x="56" y="208">Photos, or a demo set</text>
+
+            <rect class="node" x="280" y="140" width="200" height="86" rx="16"/>
+            <text class="label" x="296" y="164">2</text>
+            <text class="title" x="296" y="188">Group moments</text>
+            <text class="sub" x="296" y="208">Time and place on hand</text>
+
+            <rect class="node" x="520" y="140" width="200" height="86" rx="16"/>
+            <text class="label" x="536" y="164">3</text>
+            <text class="title" x="536" y="188">Write the diary</text>
+            <text class="sub" x="536" y="208">Evidence only</text>
+
+            <line class="arrow" x1="240" y1="183" x2="272" y2="183"/>
+            <polygon class="arrow-head" points="280,183 268,177 268,189"/>
+            <line class="arrow" x1="480" y1="183" x2="512" y2="183"/>
+            <polygon class="arrow-head" points="520,183 508,177 508,189"/>
+
+            <line class="arrow" x1="380" y1="226" x2="380" y2="258"/>
+            <polygon class="arrow-head" points="380,266 374,254 386,254"/>
+
+            <rect class="node" x="180" y="268" width="400" height="86" rx="16"/>
+            <text class="label" x="200" y="292">4 · 5 · 6</text>
+            <text class="title" x="200" y="318">Inspect why, edit, save</text>
+            <text class="sub" x="200" y="338">Each memory can be opened back to its photos</text>
+
+            <line class="arrow" x1="380" y1="354" x2="380" y2="390"/>
+            <polygon class="arrow-head" points="380,398 374,386 386,386"/>
+
+            <rect class="node proof" x="140" y="406" width="480" height="112" rx="16"/>
+            <text class="label" x="160" y="434">Proof</text>
+            <text class="title" x="160" y="462">“Afternoon at a park” opens onto the photos</text>
+            <text class="sub" x="160" y="486">Same place, same time — or Orma stays uncertain</text>
+          </svg>
+          <figcaption class="canon">Same path as text, if the drawing is hard to read:</figcaption>
+        </figure>
+        <ol class="steps">
+          <li><span>01</span> Someone who wants to keep memories, and does not consistently journal, brings one day of photos.</li>
+          <li><span>02</span> Orma reads the metadata it actually has and groups related photos into moments.</li>
+          <li><span>03</span> It writes a short diary from that evidence only.</li>
+          <li><span>04</span> The user inspects why a memory exists, corrects the text, and saves the entry.</li>
+          <li><span>05</span> It works when a claim traces to photos, and when thin evidence stays uncertain.</li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="grid two" aria-label="People and stakes">
+      <article class="panel">
+        <h2>Who it’s for</h2>
+        <p>Someone who wants to keep memories and does not consistently journal. Parents, travelers, and busy people are examples, not a specialized product.</p>
+        <p>Today they have photos, places, and timestamps scattered around, and almost none of it becomes a record of the day. Journaling asks them to stop, remember, organize, and write. Orma is meant to remove most of that work.</p>
+      </article>
+      <article class="panel">
+        <h2>Why this matters</h2>
+        <p>He recently became a dad and wants a way to keep moments with his daughter and a record of how he spends his days.</p>
+        <p>Photos capture a moment. A diary captures the day. Months or years later, remembering what that day looked like is the real product. Other people could use it too, because so many pictures just sit on a phone.</p>
+      </article>
+    </section>
+
+    <section class="card" aria-labelledby="feel">
+      <h2 id="feel">Inspiration and identity</h2>
+      <p>The main experience should feel very simple: import a day, see a few moments, read the diary, check the evidence, edit, save. The tone is a record you can trust. No visual references were named.</p>
+    </section>
+
+    <section class="card" aria-labelledby="working">
+      <h2 id="working">What “working” looks like</h2>
+      <p>One complete flow, demonstrable on a screen: select or upload photos from one day, extract available metadata, group related photos into moments, generate a short evidence-backed diary, inspect why a generated memory exists, edit it, and save it.</p>
+      <p>The moment that proves it: open a claim like “afternoon at a park” and see that it came from photos at the same place and time — or see Orma stay uncertain when the evidence is thin.</p>
+      <p>If real photo metadata is missing, a prepared demo set of photos with timestamps and locations is enough to show the flow reliably.</p>
+    </section>
+
+    <section aria-labelledby="boundary">
+      <h2 id="boundary">Now, later, and cut</h2>
+      <p>If it is not needed to prove that fragmented evidence can become a coherent, traceable memory, it is not in this proof of concept.</p>
+
+      <details class="reveal now" open>
+        <summary>Now <span class="tag">In the proof</span></summary>
+        <div class="reveal-body">
+          <ul>
+            <li>A manually uploaded day of photos, or a prepared demo dataset.</li>
+            <li>Metadata that is actually there, especially timestamps and location.</li>
+            <li>Moments grouped from that evidence.</li>
+            <li>A short diary grounded only in that evidence.</li>
+            <li>A way to inspect the source of a generated memory.</li>
+            <li>Edit the text and save the entry.</li>
+          </ul>
+        </div>
+      </details>
+
+      <details class="reveal later">
+        <summary>Later <span class="tag">Worth doing, not now</span></summary>
+        <div class="reveal-body">
+          <ul>
+            <li>Other digital traces named and then set aside: calendar events.</li>
+            <li>Automatic Google Photos or iCloud import.</li>
+            <li>Searching a larger personal memory, once one day can be reconstructed honestly.</li>
+          </ul>
+        </div>
+      </details>
+
+      <details class="reveal cut">
+        <summary>Cut <span class="tag">Named, with a reason</span></summary>
+        <div class="reveal-body">
+          <ul>
+            <li><strong>A complete life-logging platform.</strong> The hackathon only has to prove one day.</li>
+            <li><strong>Social features, sharing, and family accounts.</strong> This is a personal record, and none of that proves the kernel.</li>
+            <li><strong>Face recognition and continuous background tracking.</strong> Orma should work from what the user hands it.</li>
+            <li><strong>A native mobile app.</strong> A manually uploaded set is enough to demo.</li>
+            <li><strong>Apple Health, calendar sync, and a large memory search.</strong> Called out so they do not sneak into the build.</li>
+            <li><strong>Complex authentication, infrastructure, and settings,</strong> unless something small is required to show the core experience.</li>
+          </ul>
+        </div>
+      </details>
+    </section>
+
+    <footer>
+      Approved. Canonical plan: <code>devpost/scope.md</code>.
+    </footer>
+  </div>
+</body>
+</html>
