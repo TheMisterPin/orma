@@ -280,5 +280,5 @@ orma/
 
 - Exact EXIF library and Vision-capable Ollama model name (must accept images).
 - Auth.js v5 + Prisma adapter details with JWT + credentials together (follow current Auth.js docs).
-- Vercel body size vs chosen max shrunk image size (set an explicit max, e.g. target &lt; ~1MB after compress).
+- Vercel body size vs chosen max shrunk image size (set an explicit max, e.g. target under ~1MB after compress).
 - Place identity key for grouping: normalized address string vs rounded lat/lng geohash — pick one simple rule in the first data-model step (recommendation: store address + coords; group by normalized address when present, else by rounded coords).
