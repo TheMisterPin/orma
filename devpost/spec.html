@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Orma — Technical specification</title>
+  <style>
+    :root {
+      --paper: #f3efe6;
+      --sheet: #faf7f1;
+      --ink: #1c1915;
+      --muted: #5e584e;
+      --rule: #ddd4c6;
+      --green: #1d5c40;
+      --green-soft: #e5f0ea;
+      --brown: #5c4030;
+      --brown-soft: #efe6dc;
+      --shadow: 0 18px 50px rgba(48, 36, 18, 0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(1200px 500px at 10% -10%, #efe6d4 0%, transparent 55%),
+        var(--paper);
+      color: var(--ink);
+      font-family: "Iowan Old Style", Palatino, "Palatino Linotype", Georgia, serif;
+      line-height: 1.5;
+    }
+    .wrap { max-width: 960px; margin: 0 auto; padding: 48px 24px 80px; }
+    .kicker {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 0.78rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--green);
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(2.4rem, 7vw, 4rem);
+      font-weight: 500;
+      letter-spacing: -0.03em;
+      line-height: 0.95;
+    }
+    .lede { margin: 12px 0 0; max-width: 42rem; font-size: 1.15rem; }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 14px;
+      padding: 4px 10px;
+      border: 1px solid var(--rule);
+      border-radius: 999px;
+      background: var(--sheet);
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 0.75rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .status i { width: 8px; height: 8px; border-radius: 50%; background: #c4a35a; display: block; }
+    .canon {
+      margin: 10px 0 0;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    .canon code { font-family: ui-monospace, Menlo, monospace; font-size: 0.84em; }
+    .plain {
+      margin: 22px 0 28px;
+      padding: 18px 20px;
+      border-left: 3px solid var(--green);
+      background: var(--green-soft);
+      border-radius: 0 12px 12px 0;
+    }
+    section { margin: 28px 0; }
+    h2 {
+      margin: 0 0 10px;
+      font-size: 0.82rem;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-weight: 650;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .card {
+      background: var(--sheet);
+      border: 1px solid var(--rule);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+    p { margin: 0 0 12px; }
+    .stepper {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 0 0 16px;
+      padding: 0;
+      list-style: none;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+    }
+    .stepper button {
+      border: 1px solid var(--rule);
+      background: var(--sheet);
+      color: var(--ink);
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 0.82rem;
+      cursor: pointer;
+    }
+    .stepper button[aria-selected="true"] {
+      background: var(--green);
+      border-color: var(--green);
+      color: #f7faf8;
+    }
+    .step-panel { display: none; animation: fade 0.2s ease; }
+    .step-panel.active { display: block; }
+    @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+    .step-panel h3 { margin: 0 0 8px; font-size: 1.25rem; font-weight: 500; }
+    .meta {
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 0.88rem;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .prd {
+      font-family: ui-monospace, Menlo, monospace;
+      font-size: 0.78rem;
+      color: var(--brown);
+      background: var(--brown-soft);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    details.reveal {
+      background: var(--sheet);
+      border: 1px solid var(--rule);
+      border-radius: 14px;
+      margin: 10px 0;
+      overflow: hidden;
+    }
+    details.reveal summary {
+      cursor: pointer;
+      list-style: none;
+      padding: 14px 16px;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-weight: 650;
+    }
+    details.reveal summary::-webkit-details-marker { display: none; }
+    .reveal-body { padding: 0 16px 14px; font-size: 0.95rem; }
+    .reveal-body ul { margin: 8px 0 0; padding-left: 1.1rem; }
+    svg.flow { width: 100%; height: auto; display: block; }
+    .node { fill: var(--sheet); stroke: var(--rule); stroke-width: 1.5; }
+    .node.accent { fill: var(--green-soft); stroke: #8fbfa8; }
+    .node.warm { fill: var(--brown-soft); stroke: #c4a88a; }
+    .label {
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      fill: var(--muted);
+    }
+    .title {
+      font-family: "Iowan Old Style", Palatino, Georgia, serif;
+      font-size: 13px;
+      fill: var(--ink);
+    }
+    .arrow { stroke: var(--green); stroke-width: 1.5; fill: none; }
+    .arrow-head { fill: var(--green); }
+    .stack-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 0.88rem;
+    }
+    .stack-grid li {
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      padding: 12px 14px;
+      background: var(--sheet);
+    }
+    .stack-grid strong { display: block; color: var(--green); margin-bottom: 4px; }
+    .mermaid-fallback {
+      font-family: ui-monospace, Menlo, monospace;
+      font-size: 0.78rem;
+      white-space: pre-wrap;
+      background: #1c1915;
+      color: #e8e2d6;
+      padding: 16px;
+      border-radius: 12px;
+      overflow-x: auto;
+    }
+    #mermaid-host .mermaid { display: none; }
+    #mermaid-host.ready .mermaid { display: block; }
+    #mermaid-host.ready .mermaid-fallback { display: none; }
+    footer {
+      margin-top: 36px;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+    .noscript-note {
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <p class="kicker">Spec · proof of concept</p>
+      <h1>Orma</h1>
+      <p class="lede">Blueprint: Next.js API routes, Postgres via Prisma, shrunk photo blobs, AI SDK captions, Nominatim addresses, Leaflet on the place view.</p>
+      <p class="status"><i></i> Draft — review</p>
+      <p class="canon">Canonical plan: <code>devpost/spec.md</code>. This page is the visual companion.</p>
+    </header>
+
+    <div class="plain">
+      <p><strong>How this works.</strong> Sign in → upload one photo → read place and time → resolve an address → generate a caption with the AI SDK (Ollama now) → edit → save image bytes and evidence in Postgres → browse by day or place. Place browse draws a Leaflet map with pins. No map on the single-memory detail screen.</p>
+    </div>
+
+    <section class="card" aria-labelledby="arch">
+      <h2 id="arch">Architecture</h2>
+      <figure>
+        <svg class="flow" viewBox="0 0 900 220" role="img" aria-label="Browser to Next.js API to Postgres, Nominatim, and AI">
+          <rect class="node accent" x="20" y="70" width="130" height="70" rx="12"/>
+          <text class="label" x="36" y="96">Client</text>
+          <text class="title" x="36" y="118">React + shadcn</text>
+
+          <line class="arrow" x1="150" y1="105" x2="190" y2="105"/><polygon class="arrow-head" points="198,105 186,99 186,111"/>
+
+          <rect class="node" x="200" y="55" width="200" height="100" rx="12"/>
+          <text class="label" x="216" y="80">Next.js on Vercel</text>
+          <text class="title" x="216" y="104">Pages + API routes</text>
+          <text class="title" x="216" y="124" style="font-size:12px">Auth · upload · generate</text>
+
+          <line class="arrow" x1="400" y1="85" x2="450" y2="50"/><polygon class="arrow-head" points="456,46 444,46 450,56"/>
+          <line class="arrow" x1="400" y1="105" x2="450" y2="105"/><polygon class="arrow-head" points="458,105 446,99 446,111"/>
+          <line class="arrow" x1="400" y1="125" x2="450" y2="170"/><polygon class="arrow-head" points="456,176 450,164 444,174"/>
+
+          <rect class="node warm" x="460" y="20" width="160" height="56" rx="12"/>
+          <text class="label" x="476" y="42">External</text>
+          <text class="title" x="476" y="62">Nominatim</text>
+
+          <rect class="node accent" x="460" y="78" width="160" height="56" rx="12"/>
+          <text class="label" x="476" y="100">Database</text>
+          <text class="title" x="476" y="120">Postgres + Prisma</text>
+
+          <rect class="node" x="460" y="148" width="160" height="56" rx="12"/>
+          <text class="label" x="476" y="170">AI SDK</text>
+          <text class="title" x="476" y="190">Ollama → cloud</text>
+
+          <rect class="node warm" x="680" y="78" width="180" height="56" rx="12"/>
+          <text class="label" x="696" y="100">Place view</text>
+          <text class="title" x="696" y="120">Leaflet + pins</text>
+          <line class="arrow" x1="620" y1="105" x2="678" y2="105"/><polygon class="arrow-head" points="686,105 674,99 674,111"/>
+        </svg>
+      </figure>
+      <p class="noscript-note">Inline SVG works offline. Mermaid diagram below enhances when the CDN loads.</p>
+      <div id="mermaid-host">
+        <pre class="mermaid-fallback">Browser → Next.js (Vercel)
+  → Prisma/Postgres (memories, image bytes, tags)
+  → Nominatim (address)
+  → AI SDK → Ollama / later Google or NVIDIA
+Place page → Leaflet pins from stored lat/lng</pre>
+        <div class="mermaid">
+flowchart LR
+  UI[React UI] --> API[Next API routes]
+  API --> DB[(Postgres)]
+  API --> GEO[Nominatim]
+  API --> AI[AI SDK]
+  AI --> OLL[Ollama]
+  UI --> MAP[Leaflet place map]
+  DB --> MAP
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="journey">
+      <h2 id="journey">Core journey through the system</h2>
+      <div class="card">
+        <ul class="stepper" role="tablist" aria-label="System journey">
+          <li><button type="button" role="tab" aria-selected="true" data-step="1" id="tab-1" aria-controls="step-1">1 · Auth</button></li>
+          <li><button type="button" role="tab" aria-selected="false" data-step="2" id="tab-2" aria-controls="step-2">2 · Upload</button></li>
+          <li><button type="button" role="tab" aria-selected="false" data-step="3" id="tab-3" aria-controls="step-3">3 · Generate</button></li>
+          <li><button type="button" role="tab" aria-selected="false" data-step="4" id="tab-4" aria-controls="step-4">4 · Save</button></li>
+          <li><button type="button" role="tab" aria-selected="false" data-step="5" id="tab-5" aria-controls="step-5">5 · Place map</button></li>
+        </ul>
+
+        <div class="step-panel active" id="step-1" role="tabpanel" aria-labelledby="tab-1">
+          <h3>Landing → log in</h3>
+          <p class="meta"><span class="prd">prd.md › Landing and access</span></p>
+          <p>Public page explains Orma. NextAuth: Google or email/password (JWT). Diary routes load only that user’s rows from Postgres.</p>
+        </div>
+        <div class="step-panel" id="step-2" role="tabpanel" aria-labelledby="tab-2" hidden>
+          <h3>Upload + evidence</h3>
+          <p class="meta"><span class="prd">prd.md › Upload and metadata extraction</span></p>
+          <p>One image. EXIF → lat/lng/time. Nominatim → address. Shrink image. Both place and time required before Generate; manual + current location/time if missing.</p>
+        </div>
+        <div class="step-panel" id="step-3" role="tabpanel" aria-labelledby="tab-3" hidden>
+          <h3>Generate caption</h3>
+          <p class="meta"><span class="prd">prd.md › Generate memory</span></p>
+          <p>API sends image + place/time through the AI SDK. Ollama locally for now; swap provider later. Caption is editable; must not invent place/time against evidence.</p>
+        </div>
+        <div class="step-panel" id="step-4" role="tabpanel" aria-labelledby="tab-4" hidden>
+          <h3>Save + browse</h3>
+          <p class="meta"><span class="prd">prd.md › Save and diary browsing · Tags</span></p>
+          <p>Memory row with shrunk <code>Bytes</code>, caption, address, coords, time. Home lists update. Tags via join table. Detail shows place, day, caption — no map.</p>
+        </div>
+        <div class="step-panel" id="step-5" role="tabpanel" aria-labelledby="tab-5" hidden>
+          <h3>Place view + Leaflet</h3>
+          <p class="meta"><span class="prd">prd.md › Evidence inspection</span> · learning stretch</p>
+          <p>Browse by place → list + Leaflet map. Pins from stored coordinates. Build check: one pin first, then many.</p>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="components">
+      <h2 id="components">Components</h2>
+      <details class="reveal" open>
+        <summary>Auth + landing</summary>
+        <div class="reveal-body">
+          <p>Landing CTA; NextAuth Google + credentials/JWT. Protects diary APIs.</p>
+          <p><span class="prd">prd.md › Landing and access</span></p>
+        </div>
+      </details>
+      <details class="reveal">
+        <summary>Create memory modal + image pipeline</summary>
+        <div class="reveal-body">
+          <p>Upload, EXIF, geocode, shrink, preview, generate gate (place + time), edit caption, save.</p>
+          <p><span class="prd">prd.md › Upload and metadata extraction · Generate memory · States</span></p>
+        </div>
+      </details>
+      <details class="reveal">
+        <summary>Diary home, day &amp; place, tags</summary>
+        <div class="reveal-body">
+          <p>List/group memories; day list; place list + map; memory detail evidence; tags.</p>
+          <p><span class="prd">prd.md › Save and diary browsing · Evidence inspection · Tags</span></p>
+        </div>
+      </details>
+      <details class="reveal">
+        <summary>API: geocode, generate, images</summary>
+        <div class="reveal-body">
+          <ul>
+            <li><code>/api/upload/extract</code> — EXIF + optional Nominatim</li>
+            <li><code>/api/generate</code> — AI SDK caption</li>
+            <li><code>/api/memories</code> — CRUD + tags</li>
+            <li><code>/api/images/[id]</code> — authenticated bytes</li>
+          </ul>
+        </div>
+      </details>
+    </section>
+
+    <section class="card" aria-labelledby="stack">
+      <h2 id="stack">Stack (agreed)</h2>
+      <ul class="stack-grid">
+        <li><strong>Next + React</strong> App Router, API routes</li>
+        <li><strong>Postgres + Prisma</strong> Learner sets up DB</li>
+        <li><strong>shadcn</strong> UI on paper/green/brown</li>
+        <li><strong>NextAuth</strong> Google + JWT credentials</li>
+        <li><strong>AI SDK</strong> Ollama → Google/NVIDIA later</li>
+        <li><strong>Nominatim</strong> Free reverse geocode</li>
+        <li><strong>Leaflet</strong> Place map + pins</li>
+        <li><strong>Vercel</strong> Host; shrink images for limits</li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="run">
+      <h2 id="run">Where it runs</h2>
+      <div class="card">
+        <p>Local: install → <code>.env</code> → Prisma migrate → Ollama (if local AI) → <code>next dev</code> → <code>http://localhost:3000</code>.</p>
+        <p>Production: Vercel + learner’s Postgres URL and secrets. Demo video + public GitHub still required for submission.</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="fail">
+      <h2 id="fail">Failure modes</h2>
+      <details class="reveal" open>
+        <summary>Missing place or time</summary>
+        <div class="reveal-body"><p>Error + manual entry; both required before Generate.</p></div>
+      </details>
+      <details class="reveal">
+        <summary>AI or Nominatim down</summary>
+        <div class="reveal-body"><p>Clear retry message; manual place name if geocode fails; never invent caption or address.</p></div>
+      </details>
+      <details class="reveal">
+        <summary>Image too large</summary>
+        <div class="reveal-body"><p>Shrink first; reject if still over limit — Postgres blobs stay small.</p></div>
+      </details>
+    </section>
+
+    <footer>Draft for review. Canonical: <code>devpost/spec.md</code>. After approval → <code>5-build</code>.</footer>
+  </div>
+  <script>
+    (function () {
+      var tabs = document.querySelectorAll('.stepper button');
+      var panels = document.querySelectorAll('.step-panel');
+      function show(step) {
+        tabs.forEach(function (t) {
+          var on = t.getAttribute('data-step') === step;
+          t.setAttribute('aria-selected', on ? 'true' : 'false');
+        });
+        panels.forEach(function (p) {
+          var on = p.id === 'step-' + step;
+          p.classList.toggle('active', on);
+          p.hidden = !on;
+        });
+      }
+      tabs.forEach(function (t) {
+        t.addEventListener('click', function () { show(t.getAttribute('data-step')); });
+      });
+    })();
+  </script>
+  <script>
+    (function () {
+      var host = document.getElementById('mermaid-host');
+      var s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js';
+      s.onload = function () {
+        try {
+          window.mermaid.initialize({ startOnLoad: false, theme: 'neutral' });
+          window.mermaid.run({ nodes: host.querySelectorAll('.mermaid') }).then(function () {
+            host.classList.add('ready');
+          }).catch(function () {});
+        } catch (e) {}
+      };
+      s.onerror = function () {};
+      document.body.appendChild(s);
+    })();
+  </script>
+</body>
+</html>
