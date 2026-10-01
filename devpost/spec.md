@@ -7,7 +7,7 @@ status: draft
 
 ## How This Works, In Plain Language
 
-Orma is a personal diary website. You sign in (Google or email/password). You upload one photo. The app reads place and time from the photo when they’re there, turns coordinates into an address, and shows you that evidence. You press Generate; an AI writes a short caption from the photo and that evidence. You edit if you want, save, and the memory lives in your Postgres database—including a shrunk copy of the image. Later you browse by day or by place. On the place view, a map shows pins for those memories. The AI provider can be Ollama on your machine or a cloud model later; the app talks to AI the same way either way.
+Orma is a personal diary website. You sign up / sign in with email and password; the API issues a **custom JWT** the browser keeps and sends on later requests. You upload one photo. The app reads place and time from the photo when they’re there, turns coordinates into an address, and shows you that evidence. You press Generate; an AI writes a short caption from the photo and that evidence. You edit if you want, save, and the memory lives in your Postgres database—including a shrunk copy of the image. Later you browse by day or by place. On the place view, a map shows pins for those memories. The AI provider can be Ollama on your machine or a cloud model later; the app talks to AI the same way either way.
 
 Why this shape: you already know Next, React, Postgres, Prisma, shadcn, and the AI SDK, and you want a real backend you’ll keep using—not a throwaway demo. New pieces to learn are photo metadata, location/address lookup, and Leaflet on the place map.
 
@@ -16,7 +16,7 @@ Why this shape: you already know Next, React, Postgres, Prisma, shadcn, and the 
 PRD ref: `prd.md > The Core Journey`.
 
 1. **Landing** — Browser loads a public Next.js page. No diary data.
-2. **Log in** — NextAuth: Google OAuth or credentials (JWT session). On success, redirect to diary home.
+2. **Log in** — Register or sign in with email/password. API verifies against Prisma, returns a signed JWT. Client stores the token and sends it on diary API calls; redirect to diary home.
 3. **Diary home** — Server loads this user’s memories from Postgres via Prisma. Empty → CTA to create. Otherwise list + day/place grouping controls.
 4. **Upload** — Modal: one image file. Client or API reads EXIF (lat, lng, timestamp). If coordinates exist, API asks Nominatim for an address and returns it. Image is resized/compressed before it will be stored. Preview shows image + evidence. If place or time is missing → error + manual entry (both required); shortcuts for current location and current time.
 5. **Generate** — `POST` API route sends image + place/time context through the **Vercel AI SDK** (Ollama now; Google/NVIDIA later via env). Caption returns for edit.
@@ -33,7 +33,7 @@ PRD ref: `prd.md > The Core Journey`.
 | **Postgres** | Source of truth (learner provisions; Prisma connects) | https://www.postgresql.org/docs |
 | **Prisma** | Schema, migrations, queries | https://www.prisma.io/docs |
 | **shadcn/ui** | UI primitives | https://ui.shadcn.com |
-| **Auth.js / NextAuth** | Google + credentials, JWT sessions | https://authjs.dev |
+| **Custom JWT auth** | Email/password register + login; signed JWT on API | https://jwt.io/introduction (concept); use a well-maintained signer e.g. `jose` — https://github.com/panva/jose |
 | **Vercel AI SDK** | Provider-agnostic caption generation | https://sdk.vercel.ai/docs |
 | **Ollama** (dev default) | Local model endpoint for AI SDK | https://ollama.com |
 | **exif-reader or similar** | Lat/lng/time from image — *verify package early in build* | — |
@@ -42,13 +42,13 @@ PRD ref: `prd.md > The Core Journey`.
 | **Leaflet** (+ React Leaflet) | Place-view map + pins | https://leafletjs.com ; https://react-leaflet.js.org |
 | **Vercel** | Hosting | https://vercel.com/docs |
 
-**Learner agreements:** familiar core stack; stretch = EXIF, location, Leaflet. Backend + API routes + DB (not a frontend-only fake). Host on Vercel; DB set up by learner via Prisma. Auth = NextAuth Google + own credentials/JWT. Images = shrunk blobs in Postgres. AI = AI SDK, Ollama first, swap later. Geocode = free Nominatim. Map = place browse only, not memory detail. Single photo per create; both place and time required before Generate.
+**Learner agreements:** familiar core stack; stretch = EXIF, location, Leaflet. Backend + API routes + DB (not a frontend-only fake). Host on Vercel; DB set up by learner via Prisma. Auth = **custom JWT** (email/password; no NextAuth/Google). Images = shrunk blobs in Postgres. AI = AI SDK, Ollama first, swap later. Geocode = free Nominatim. Map = place browse only, not memory detail. Single photo per create; both place and time required before Generate.
 
 ## Where It Runs and How Someone Tries It
 
 - **Runtime:** Next.js on Vercel (Node serverless/API routes) + Postgres reachable from Vercel.
 - **Local/dev:** `npm run dev` (or `pnpm`/`yarn` as chosen in build). Postgres via learner’s Prisma setup. Ollama running locally for captions when using the local provider.
-- **Env (names illustrative):** `DATABASE_URL`, `AUTH_SECRET`, Google OAuth client id/secret, `AI_PROVIDER` / Ollama base URL (and later Google/NVIDIA keys). Never commit secrets; ship `.env.example` only.
+- **Env (names illustrative):** `DATABASE_URL`, `JWT_SECRET` (signing key), `AI_PROVIDER` / Ollama base URL (and later Google/NVIDIA keys). Never commit secrets; ship `.env.example` only.
 - **Start (expected):** install deps → set `.env` → `prisma migrate` / `db push` → start Ollama if local AI → `next dev` → open `http://localhost:3000`.
 - **Demo recording:** Log in → empty or existing diary → upload one photo (or demo photo with EXIF) → see address/time → Generate → edit → save → browse by day and by place (map with pins) → add a tag. Submission also needs public GitHub + short video; Vercel URL is extra for personal use.
 - **Deploy:** Push to GitHub; Vercel project pointed at the repo; set env vars; run Prisma migrations against the hosted DB the learner configures.
@@ -70,10 +70,11 @@ Carried from `prd.md > Look and Feel` / `scope.md > Inspiration & Identity`:
 Public explanation of Orma + Log in CTA. No memories.  
 Implements `prd.md > Landing and access`, `Screens and Layout > Landing`.
 
-### Auth (NextAuth)
+### Auth (custom JWT)
 
-Google provider + Credentials provider; JWT session strategy. Protect diary routes/API so each user only sees their rows.  
-Implements `prd.md > Landing and access`.
+Register and login API routes: hash password (e.g. bcrypt), store user in Postgres, issue a signed JWT (`jose` or equivalent). Client keeps the token (httpOnly cookie preferred, or secure storage agreed in build) and sends it on protected requests. Middleware or helpers verify JWT and scope queries to `userId`. No OAuth / NextAuth in this POC.  
+Implements `prd.md > Landing and access`.  
+Tradeoff accepted: full control and one auth path; you own password reset, hashing, and token expiry yourself (keep POC minimal: login + register + logout).
 
 ### Diary home
 
@@ -119,8 +120,7 @@ Implements `prd.md > Upload and metadata extraction`.
 
 Postgres via Prisma. Shape (names may refine in migration):
 
-**User** — NextAuth user (id, name, email, password hash if credentials, image, timestamps).  
-**Account / Session / VerificationToken** — as required by Auth.js adapter (JWT sessions may slim some of these; follow Auth.js + Prisma adapter docs in build).
+**User** — `id`, `email` (unique), `passwordHash`, `name` (optional), `createdAt`, `updatedAt`. No Auth.js Account/Session tables.
 
 **Memory**
 
@@ -143,7 +143,7 @@ Postgres via Prisma. Shape (names may refine in migration):
 
 | Data | Stored | On return |
 |---|---|---|
-| Session | JWT (Auth.js) | Still signed in until expiry/sign-out |
+| Auth token | Custom JWT (cookie or client storage) | Valid until expiry or logout clears it |
 | Memories, tags, edits | Postgres | Loaded by `userId` on diary routes |
 | Image | Postgres `Bytes` | Served via authenticated image route or data URL from API |
 | Address | Column on Memory | No re-geocode unless coords change |
@@ -158,13 +158,16 @@ orma/
 │   ├── layout.tsx
 │   ├── globals.css              # Paper/green/brown tokens
 │   ├── login/page.tsx           # Sign-in UI
+│   ├── register/page.tsx        # Sign-up UI
 │   ├── diary/
 │   │   ├── page.tsx             # Home list + day/place controls
 │   │   ├── day/[day]/page.tsx  # Day drill-down
 │   │   └── place/[placeId]/page.tsx  # Place list + Leaflet
 │   ├── memories/[id]/page.tsx   # Evidence detail (no map)
 │   └── api/
-│       ├── auth/[...nextauth]/route.ts
+│       ├── auth/register/route.ts
+│       ├── auth/login/route.ts
+│       ├── auth/logout/route.ts
 │       ├── memories/route.ts     # list/create
 │       ├── memories/[id]/route.ts
 │       ├── memories/[id]/tags/route.ts
@@ -185,7 +188,7 @@ orma/
 │   └── ui/                      # shadcn
 ├── lib/
 │   ├── prisma.ts
-│   ├── auth.ts
+│   ├── auth.ts                  # hash password, sign/verify JWT
 │   ├── image.ts                 # shrink + EXIF helpers
 │   ├── geocode.ts               # Nominatim client
 │   └── ai.ts                    # AI SDK provider factory (Ollama default)
@@ -206,16 +209,15 @@ orma/
 - Connection via `DATABASE_URL`. Prisma Migrate / `db push` in setup.
 - Docs: https://www.prisma.io/docs/orm/overview/databases/postgresql
 
-### Auth.js — Google
+### Custom JWT auth
 
-- OAuth app; callback to `/api/auth/callback/google`.
-- Docs: https://authjs.dev/getting-started/providers/google
-
-### Auth.js — Credentials + JWT
-
-- Email/password verified against Prisma user; JWT session.
-- Tradeoff accepted: two login paths, more edge cases, learner-controlled fallback.
-- Docs: https://authjs.dev/getting-started/authentication/credentials
+- `POST /api/auth/register` — email, password → create user with hashed password → return JWT.
+- `POST /api/auth/login` — email, password → verify → return JWT.
+- `POST /api/auth/logout` — clear cookie / client token.
+- Protected routes: `Authorization: Bearer …` or httpOnly cookie; verify signature with `JWT_SECRET`.
+- Libraries: password hash (e.g. bcrypt) + JWT (`jose` recommended on Next/Edge).
+- Docs: https://github.com/panva/jose ; https://jwt.io/introduction
+- Out of POC unless needed: email verification, password reset, refresh-token rotation.
 
 ### Nominatim reverse geocode
 
@@ -256,14 +258,14 @@ orma/
 - **Map only on place browse** instead of every detail page — matches product choice; Leaflet still learned where it pays off.
 - **AI SDK + Ollama first** instead of hard-wiring one cloud — agnostic swap later.
 - **No people grouping / face recognition / social** — already cut in scope/PRD.
-- **Auth included** (Google + credentials) — needed for a personal diary you’ll use; kept to Auth.js rather than custom session infra.
+- **Custom JWT only** instead of NextAuth + Google — one email/password path you control; no OAuth app setup. You own hashing, expiry, and logout.
 
 ## Decisions and Open Issues
 
 **Decisions**
 
 - Stack: Next/React/Postgres/Prisma/shadcn/AI SDK; deploy Vercel; learner owns DB setup.
-- Auth: NextAuth Google + credentials with JWT.
+- Auth: custom JWT (email/password register/login); no NextAuth/Google.
 - Storage: shrunk image `Bytes` in Postgres.
 - AI: AI SDK; Ollama now; Google or NVIDIA later via config.
 - Geocode: Nominatim; persist address.
@@ -279,6 +281,6 @@ orma/
 **Open / verify early in build**
 
 - Exact EXIF library and Vision-capable Ollama model name (must accept images).
-- Auth.js v5 + Prisma adapter details with JWT + credentials together (follow current Auth.js docs).
+- JWT delivery: prefer httpOnly secure cookie vs Bearer in localStorage — decide in first auth build step (recommendation: httpOnly cookie on same-site Vercel deploy).
 - Vercel body size vs chosen max shrunk image size (set an explicit max, e.g. target under ~1MB after compress).
 - Place identity key for grouping: normalized address string vs rounded lat/lng geohash — pick one simple rule in the first data-model step (recommendation: store address + coords; group by normalized address when present, else by rounded coords).

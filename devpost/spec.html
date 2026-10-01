@@ -296,7 +296,7 @@ flowchart LR
         <div class="step-panel active" id="step-1" role="tabpanel" aria-labelledby="tab-1">
           <h3>Landing → log in</h3>
           <p class="meta"><span class="prd">prd.md › Landing and access</span></p>
-          <p>Public page explains Orma. NextAuth: Google or email/password (JWT). Diary routes load only that user’s rows from Postgres.</p>
+          <p>Public page explains Orma. Email/password register or login; API issues a <strong>custom JWT</strong>. Diary APIs verify the token and load only that user’s rows from Postgres.</p>
         </div>
         <div class="step-panel" id="step-2" role="tabpanel" aria-labelledby="tab-2" hidden>
           <h3>Upload + evidence</h3>
@@ -326,7 +326,7 @@ flowchart LR
       <details class="reveal" open>
         <summary>Auth + landing</summary>
         <div class="reveal-body">
-          <p>Landing CTA; NextAuth Google + credentials/JWT. Protects diary APIs.</p>
+          <p>Landing CTA; register/login routes; custom JWT on protected diary APIs. No NextAuth/Google.</p>
           <p><span class="prd">prd.md › Landing and access</span></p>
         </div>
       </details>
@@ -363,7 +363,7 @@ flowchart LR
         <li><strong>Next + React</strong> App Router, API routes</li>
         <li><strong>Postgres + Prisma</strong> Learner sets up DB</li>
         <li><strong>shadcn</strong> UI on paper/green/brown</li>
-        <li><strong>NextAuth</strong> Google + JWT credentials</li>
+        <li><strong>Custom JWT</strong> Email/password; signed token</li>
         <li><strong>AI SDK</strong> Ollama → Google/NVIDIA later</li>
         <li><strong>Nominatim</strong> Free reverse geocode</li>
         <li><strong>Leaflet</strong> Place map + pins</li>
