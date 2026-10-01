@@ -1,11 +1,13 @@
 ---
 doc: checklist
-status: draft
+status: approved
 ---
 
 # Build Checklist
 
 Build mode: [learn or fast — record once chosen; carry forward on resume]
+
+Package manager: pnpm (learner preference)
 
 ## Slices
 
@@ -14,8 +16,8 @@ Build mode: [learn or fast — record once chosen; carry forward on resume]
   Why now: Bootstrapping lives here, and every later slice needs a private place to land. Auth and the empty home prove the personal-diary boundary before any photo or AI work.
   PRD ref: `prd.md > The Core Journey` (steps 1–3), `prd.md > Landing and access`, `prd.md > Screens and Layout > Landing`, `Diary home`
   Spec ref: `spec.md > Stack`, `spec.md > Where It Runs and How Someone Tries It`, `spec.md > Look and Feel`, `spec.md > Components > Landing page`, `Auth (custom JWT)`, `Diary home`, `spec.md > Data Model` (User), `spec.md > File Structure`
-  Build: Scaffold Next.js (App Router) + TypeScript + Tailwind + shadcn; add paper/green/brown tokens; Prisma User model and Postgres connection; register/login/logout API with hashed passwords and JWT in an httpOnly cookie; landing page; protected diary home with empty-state CTA; `.env.example` and README start steps.
-  Verify (mechanical): App starts with `npm run dev`; register a user, log in, confirm redirect to diary empty state; log out and confirm landing/login again; confirm a second user cannot see another user’s session data (empty diary only).
+  Build: Scaffold Next.js (App Router) + TypeScript + Tailwind + shadcn with **pnpm**; add paper/green/brown tokens; Prisma User model and Postgres connection; register/login/logout API with hashed passwords and JWT in an httpOnly cookie; landing page; protected diary home with empty-state CTA; `.env.example` and README start steps (`pnpm install`, `pnpm dev`).
+  Verify (mechanical): App starts with `pnpm dev`; register a user, log in, confirm redirect to diary empty state; log out and confirm landing/login again; confirm a second user cannot see another user’s session data (empty diary only).
   Learner check: Open the site, register, log in, and say whether the landing and empty diary feel like a calm notebook-style personal diary.
   Commit: `Add landing, JWT auth, and empty diary home`
 
@@ -81,3 +83,5 @@ Reflection: [offered/answered/declined/already covered — personal answer belon
 Activity mode: [live app and editor, explicit static fallback, focused alternative, prior practice, or recap]
 
 ## Revisions
+
+- Prefer `pnpm` for install and scripts — learner preference recorded at checklist approval; slice verify/start commands use `pnpm` instead of npm.
