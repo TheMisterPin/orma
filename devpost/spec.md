@@ -151,47 +151,52 @@ Postgres via Prisma. Shape (names may refine in migration):
 
 ## File Structure
 
+Structure by **business feature**, not by file type. Routes stay thin: `route/page → feature hook → stateless feature view`. Feature-specific code stays inside its feature; shared folders exist only for infrastructure reused across features.
+
+Canonical shape for every business feature (omit empty subfolders until needed; do not invent a second layout for a new feature):
+
+```
+src/features/<feature>/
+  types/
+  actions/                 # server queries/mutations and business ops
+  hooks/                   # client orchestration
+  components/
+    forms/
+    tables/                # only when the feature has tables
+    pages/                 # stateless page/view components
+  index.ts                 # client-safe public exports only
+```
+
 ```
 orma/
-├── app/
-│   ├── page.tsx                 # Landing (signed out)
-│   ├── layout.tsx
-│   ├── globals.css              # Paper/green/brown tokens
-│   ├── login/page.tsx           # Sign-in UI
-│   ├── register/page.tsx        # Sign-up UI
-│   ├── diary/
-│   │   ├── page.tsx             # Home list + day/place controls
-│   │   ├── day/[day]/page.tsx  # Day drill-down
-│   │   └── place/[placeId]/page.tsx  # Place list + Leaflet
-│   ├── memories/[id]/page.tsx   # Evidence detail (no map)
-│   └── api/
-│       ├── auth/register/route.ts
-│       ├── auth/login/route.ts
-│       ├── auth/logout/route.ts
-│       ├── memories/route.ts     # list/create
-│       ├── memories/[id]/route.ts
-│       ├── memories/[id]/tags/route.ts
-│       ├── upload/extract/route.ts   # EXIF + optional geocode
-│       ├── geocode/route.ts
-│       ├── generate/route.ts     # AI SDK caption
-│       └── images/[id]/route.ts  # authenticated image bytes
-├── components/
-│   ├── landing/
-│   ├── auth/
-│   ├── diary/
-│   ├── memory/
-│   │   ├── create-memory-modal.tsx
-│   │   ├── memory-card.tsx
-│   │   └── evidence-panel.tsx
-│   ├── maps/
-│   │   └── place-map.tsx        # Leaflet + pins
-│   └── ui/                      # shadcn
-├── lib/
-│   ├── prisma.ts
-│   ├── auth.ts                  # hash password, sign/verify JWT
-│   ├── image.ts                 # shrink + EXIF helpers
-│   ├── geocode.ts               # Nominatim client
-│   └── ai.ts                    # AI SDK provider factory (Ollama default)
+├── src/
+│   ├── app/                          # Thin Next.js routes only — wire features, no feature logic
+│   │   ├── layout.tsx
+│   │   ├── globals.css               # Paper/green/brown tokens
+│   │   ├── page.tsx                  # → landing feature
+│   │   ├── login/page.tsx            # → auth feature
+│   │   ├── register/page.tsx         # → auth feature
+│   │   ├── diary/
+│   │   │   ├── page.tsx              # → diary feature
+│   │   │   ├── day/[day]/page.tsx
+│   │   │   └── place/[placeId]/page.tsx
+│   │   ├── memories/[id]/page.tsx    # → memories feature
+│   │   └── api/                      # Thin route handlers delegating to feature actions
+│   │       ├── auth/...
+│   │       ├── memories/...
+│   │       ├── upload/extract/...
+│   │       ├── geocode/...
+│   │       ├── generate/...
+│   │       └── images/[id]/...
+│   ├── features/
+│   │   ├── landing/                  # Public explanation + Log in CTA
+│   │   ├── auth/                     # Register, login, logout, JWT session helpers
+│   │   ├── diary/                    # Home list, empty state, day/place browse + place map
+│   │   └── memories/                 # Create flow, evidence detail, tags, image/EXIF/geocode/AI ops
+│   └── shared/                       # Only genuinely cross-feature infrastructure
+│       ├── ui/                       # shadcn primitives
+│       ├── db/                       # Prisma client
+│       └── config/                   # Env helpers, design tokens if needed outside CSS
 ├── prisma/
 │   ├── schema.prisma
 │   └── migrations/
@@ -199,8 +204,21 @@ orma/
 ├── .env.example
 ├── package.json
 ├── README.md
-└── devpost/                     # learning docs (this spec, prd, scope)
+└── devpost/
 ```
+
+**Feature ownership (POC)**
+
+| Feature | Owns |
+|---|---|
+| `landing` | Public landing view |
+| `auth` | Register/login/logout forms, password hash + JWT sign/verify (server actions), session cookie helpers used by routes/middleware |
+| `diary` | Diary home list/empty state, day and place grouping views, Leaflet place map (browse concern) |
+| `memories` | Create-memory form/modal, upload/EXIF/shrink, Nominatim geocode, caption generate (AI SDK), save/load memory, evidence detail, tags, authenticated image bytes |
+
+**Shared (outside features) only when reused:** `shared/ui` (shadcn), `shared/db` (Prisma client). Image/EXIF, geocode, and AI stay under `memories/actions` until a second feature truly needs them.
+
+**Rules:** Keep code that changes together in the same feature. No giant global `components/`, `hooks/`, `services/`, `utils/`, or `types/` for feature-specific code. `index.ts` exports client-safe surface only; server actions are imported from `actions/` by route handlers, not re-exported through the client barrel. When adding a feature: mirror the closest existing feature; reuse shared systems; add new shared infrastructure only if the current system cannot support the requirement.
 
 ## External Services and Dependencies
 
@@ -272,6 +290,7 @@ orma/
 - Map: Leaflet on place view with pins; not on memory detail.
 - Generate gate: both place and time required.
 - Create flow: one photo only in this POC.
+- Code layout: feature folders under `src/features` (`landing`, `auth`, `diary`, `memories`); thin `src/app` routes; shared only cross-feature infra (`shared/ui`, `shared/db`).
 
 **Learner uncertainty (Leaflet)**
 
@@ -284,3 +303,7 @@ orma/
 - JWT delivery: prefer httpOnly secure cookie vs Bearer in localStorage — decide in first auth build step (recommendation: httpOnly cookie on same-site Vercel deploy).
 - Vercel body size vs chosen max shrunk image size (set an explicit max, e.g. target under ~1MB after compress).
 - Place identity key for grouping: normalized address string vs rounded lat/lng geohash — pick one simple rule in the first data-model step (recommendation: store address + coords; group by normalized address when present, else by rounded coords).
+
+**Architecture (learner)**
+
+- Feature folders under `src/features`, not type-based global folders. See `File Structure`. This replaces the earlier app/components/lib layout in the draft spec.
