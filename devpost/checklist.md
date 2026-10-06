@@ -5,13 +5,13 @@ status: approved
 
 # Build Checklist
 
-Build mode: [learn or fast — record once chosen; carry forward on resume]
+Build mode: learn
 
 Package manager: pnpm (learner preference)
 
 ## Slices
 
-- [ ] **1. Sign in and land on your empty personal diary**
+- [x] **1. Sign in and land on your empty personal diary**
   Becomes usable: A running Orma site with the paper/notebook look: public landing, email/password register and login (custom JWT), and a signed-in diary home that shows an empty state with a clear “create a memory from an image” CTA.
   Why now: Bootstrapping lives here, and every later slice needs a private place to land. Auth and the empty home prove the personal-diary boundary before any photo or AI work.
   PRD ref: `prd.md > The Core Journey` (steps 1–3), `prd.md > Landing and access`, `prd.md > Screens and Layout > Landing`, `Diary home`
